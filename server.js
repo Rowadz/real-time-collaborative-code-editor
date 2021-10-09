@@ -47,9 +47,11 @@ app.post('/create-room-with-user', async (req, res) => {
 })
 
 io.on('connection', (socket) => {
-  socket.on('CODE_CHANGED', (code) => {
+  socket.on('CODE_CHANGED', async (code) => {
+    const { roomId, username } = await client.hGetAll(socket.id)
+    const roomName = `ROOM:${roomId}`
     // io.emit('CODE_CHANGED', code)
-    socket.broadcast.emit('CODE_CHANGED', code)
+    socket.to(roomName).emit('CODE_CHANGED', code)
   })
 
   socket.on('DISSCONNECT_FROM_ROOM', async ({ roomId, username }) => {})
@@ -58,7 +60,9 @@ io.on('connection', (socket) => {
     await client.lPush(`${roomId}:users`, `${username}`)
     await client.hSet(socket.id, { roomId, username })
     const users = await client.lRange(`${roomId}:users`, 0, -1)
-    io.emit(`ROOM:${roomId}:EVENT:CONNECTION`, users)
+    const roomName = `ROOM:${roomId}`
+    socket.join(roomName)
+    io.in(roomName).emit('ROOM:CONNECTION', users)
   })
 
   socket.on('disconnect', async () => {
@@ -73,7 +77,8 @@ io.on('connection', (socket) => {
       await client.del(`${roomId}:users`)
     }
 
-    io.emit(`ROOM:${roomId}:EVENT:CONNECTION`, newUsers)
+    const roomName = `ROOM:${roomId}`
+    io.in(roomName).emit('ROOM:CONNECTION', newUsers)
   })
 })
 

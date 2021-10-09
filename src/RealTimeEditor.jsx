@@ -54,9 +54,7 @@ const RealTimeEditor = () => {
       socket.emit('DISSCONNECT_FROM_ROOM', { roomId, username })
     })
 
-    console.log(`ROOM:${roomId}:EVENT:CONNECTION`)
-
-    socket.on(`ROOM:${roomId}:EVENT:CONNECTION`, (users) => {
+    socket.on('ROOM:CONNECTION', (users) => {
       setUsers(users)
       console.log(users)
     })
