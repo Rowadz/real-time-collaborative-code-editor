@@ -7,9 +7,13 @@ const cors = require('cors')
 const io = new Server(server)
 const { createClient } = require('redis')
 const { v4 } = require('uuid')
+const moment = require('moment')
+const { json } = require('body-parser')
+
 const { blueBright, greenBright, redBright } = require('chalk')
 
 const client = createClient()
+app.use(json())
 app.use(cors())
 
 client.on('error', console.error)
@@ -24,15 +28,22 @@ app.get('/', (req, res) => {
   res.send({ msg: 'hi' })
 })
 
-app.post('/create-room-with-user', (req, res) => {
-  const body = req.body
+app.post('/create-room-with-user', async (req, res) => {
+  const { username } = req.body
   const roomId = v4()
-  res.status(201).send({ roomId })
-})
 
-app.post('/create-user', (req, res) => {
-  const body = req.body
-  res.sendStatus(201)
+  await client
+    .hSet(`${roomId}:info`, {
+      created: moment(),
+      updated: moment(),
+    })
+    .catch((err) => {
+      console.error(1, err)
+    })
+
+  // await client.lSet(`${roomId}:users`, [])
+
+  res.status(201).send({ roomId })
 })
 
 io.on('connection', (socket) => {
@@ -40,8 +51,29 @@ io.on('connection', (socket) => {
     // io.emit('CODE_CHANGED', code)
     socket.broadcast.emit('CODE_CHANGED', code)
   })
-  socket.on('CONNECTED_TO_ROOM', ({ roomId }) => {
-    socket.broadcast.emit(`ROOM:${roomId}:EVENT:CONNECTION`)
+
+  socket.on('DISSCONNECT_FROM_ROOM', async ({ roomId, username }) => {})
+
+  socket.on('CONNECTED_TO_ROOM', async ({ roomId, username }) => {
+    await client.lPush(`${roomId}:users`, `${username}`)
+    await client.hSet(socket.id, { roomId, username })
+    const users = await client.lRange(`${roomId}:users`, 0, -1)
+    io.emit(`ROOM:${roomId}:EVENT:CONNECTION`, users)
+  })
+
+  socket.on('disconnect', async () => {
+    // TODO if 2 users have the same name
+    const { roomId, username } = await client.hGetAll(socket.id)
+    const users = await client.lRange(`${roomId}:users`, 0, -1)
+    const newUsers = users.filter((user) => username !== user)
+    if (newUsers.length) {
+      await client.del(`${roomId}:users`)
+      await client.lPush(`${roomId}:users`, newUsers)
+    } else {
+      await client.del(`${roomId}:users`)
+    }
+
+    io.emit(`ROOM:${roomId}:EVENT:CONNECTION`, newUsers)
   })
 })
 

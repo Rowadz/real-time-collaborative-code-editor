@@ -21,7 +21,8 @@ const EnterName = () => {
 
   const { mutateAsync } = useMutation(({ username, roomId, uri }) => {
     return axios.post(`http://localhost:3001/${uri}`, {
-      body: { username, roomId },
+      username,
+      roomId,
     })
   })
 
@@ -68,21 +69,7 @@ const EnterName = () => {
       })
       return
     }
-    await mutateAsync(
-      { username: value, uri: 'create-user' },
-      {
-        onSuccess: () => {
-          setRoomId(roomIdValue)
-          toast({
-            title: 'Trying to connect to the room',
-            status: 'info',
-            duration: 9000,
-            isClosable: true,
-          })
-          return null
-        },
-      }
-    )
+    setRoomId(roomIdValue)
     setUsername(value)
   }
 

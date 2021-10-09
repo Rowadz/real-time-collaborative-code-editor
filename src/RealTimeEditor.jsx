@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import 'codemirror/lib/codemirror.css'
 // import 'codemirror/lib/codemirror'
 import 'codemirror/theme/material-ocean.css'
@@ -6,10 +6,11 @@ import 'codemirror/mode/javascript/javascript'
 import 'codemirror/keymap/sublime'
 import CodeMirror from 'codemirror'
 import io from 'socket.io-client'
-import { Text, Badge } from '@chakra-ui/react'
+import { Text, Code } from '@chakra-ui/react'
 import { useStore } from './store'
 
 const RealTimeEditor = () => {
+  const [users, setUsers] = useState([])
   const { username, roomId } = useStore(({ username, roomId }) => ({
     username,
     roomId,
@@ -46,13 +47,18 @@ const RealTimeEditor = () => {
     })
 
     socket.on('connect', () => {
-      socket.emit('CONNECTED_TO_ROOM', { roomId })
+      socket.emit('CONNECTED_TO_ROOM', { roomId, username })
     })
 
-    socket.on('disconnect', () => {})
+    socket.on('disconnect', () => {
+      socket.emit('DISSCONNECT_FROM_ROOM', { roomId, username })
+    })
 
-    socket.on(`ROOM:${roomId}:EVENT:CONNECTION`, () => {
-      console.log('HI :)')
+    console.log(`ROOM:${roomId}:EVENT:CONNECTION`)
+
+    socket.on(`ROOM:${roomId}:EVENT:CONNECTION`, (users) => {
+      setUsers(users)
+      console.log(users)
     })
 
     editor.on('change', (instance, changes) => {
@@ -65,14 +71,18 @@ const RealTimeEditor = () => {
     editor.on('cursorActivity', (instance) => {
       // console.log(instance.cursorCoords())
     })
+
+    return () => {
+      socket.emit('DISSCONNECT_FROM_ROOM', { roomId, username })
+    }
   }, [])
 
   return (
     <>
       <Text fontSize="2xl">Your username is: {username}</Text>
-      <Text fontSize="lg">The room ID is: {roomId}</Text>
-      <Text fontSize="lg">
-        How many pople are connected: <Badge colorScheme="purple">3</Badge>
+      <Text fontSize="2xl">The room ID is: {roomId}</Text>
+      <Text fontSize="2xl">
+        How many pople are connected: <b> {users.length}</b>
       </Text>
 
       <textarea id="ds" />
