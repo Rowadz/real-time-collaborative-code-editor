@@ -97,7 +97,7 @@ const EnterName = () => {
         />
         <InputRightElement width="4.5rem">
           <Button size="lg" onClick={enterRoom}>
-            Go!
+            Join!
           </Button>
         </InputRightElement>
       </InputGroup>
