@@ -13,7 +13,7 @@ https://github.com/MohammedAl-Rowad/caskbrewer
 Lab playlist:
 https://youtube.com/playlist?list=PLM0LBHjz37LU9wTI6mttZ5qeu5F3hcotf
 
-# How to install
+# How to install & run it locally
 
 ```bash
 $ git clone https://github.com/MohammedAl-Rowad/real-time-collaborative-code-editor.git
