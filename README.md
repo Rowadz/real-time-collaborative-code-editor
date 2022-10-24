@@ -8,7 +8,7 @@
 # Notes
 
 previous lab repo:
-https://github.com/MohammedAl-Rowad/caskbrewer
+https://github.com/Rowadz/caskbrewer
 
 Lab playlist:
 https://youtube.com/playlist?list=PLM0LBHjz37LU9wTI6mttZ5qeu5F3hcotf
